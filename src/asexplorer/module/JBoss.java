@@ -1,6 +1,6 @@
-package asexplorer.modules;
+package asexplorer.module;
 
-import asexplorer.ASConfig;
+import asexplorer.Config;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,30 +12,29 @@ import javax.naming.NamingException;
  *
  * @author unixo
  */
-public class JBoss implements ApplicationServerInterface {
+public class JBoss implements ModuleInterface
+{
 
   @Override
-  public String getName() {
+  public String getName()
+  {
     return "JBoss";
   }
 
   @Override
-  public String getTypeCode() {
-    throw new UnsupportedOperationException("Not supported yet.");
+  public String getType()
+  {
+    return "jboss";
   }
 
   @Override
-  public String getDefaultProtocol() {
+  public String getDefaultProtocol()
+  {
     return "jnp";
   }
 
   @Override
-  public Integer getDefaultPort() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  @Override
-  public InitialContext buildInitialContext(ASConfig config)
+  public InitialContext buildInitialContext(Config config)
   {
     InitialContext ctx = null;
     Properties props = null;

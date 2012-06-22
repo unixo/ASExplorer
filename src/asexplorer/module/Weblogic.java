@@ -1,6 +1,6 @@
-package asexplorer.modules;
+package asexplorer.module;
 
-import asexplorer.ASConfig;
+import asexplorer.Config;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,7 +12,7 @@ import javax.naming.NamingException;
  *
  * @author unixo
  */
-public class Weblogic implements ApplicationServerInterface
+public class Weblogic implements ModuleInterface
 {
 
   @Override
@@ -22,9 +22,9 @@ public class Weblogic implements ApplicationServerInterface
   }
 
   @Override
-  public String getTypeCode()
+  public String getType()
   {
-    return "WEBLOGIC";
+    return "weblogic";
   }
 
   @Override
@@ -34,13 +34,7 @@ public class Weblogic implements ApplicationServerInterface
   }
 
   @Override
-  public Integer getDefaultPort()
-  {
-    return 7001;
-  }
-
-  @Override
-  public InitialContext buildInitialContext(ASConfig config)
+  public InitialContext buildInitialContext(Config config)
   {
     InitialContext ctx = null;
     Properties props = null;
@@ -64,6 +58,7 @@ public class Weblogic implements ApplicationServerInterface
 
       ctx = new InitialContext(props);
     } catch (NamingException ex) {
+      System.err.println("Unable to create initial context ("+props+')');
       Logger.getLogger(Weblogic.class.getName()).log(Level.SEVERE, null, ex);
     }
 
