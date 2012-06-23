@@ -26,7 +26,9 @@ public class ASExplorer
         }
 
         InitialContext ctx = as.getBuildContext();
-        System.out.println(ctx);
+        if (ctx == null) {
+            System.exit(1);
+        }
     }
 
     /**
