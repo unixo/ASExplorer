@@ -3,6 +3,8 @@ package asexplorer;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 import javax.naming.InitialContext;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -10,6 +12,7 @@ import javax.naming.InitialContext;
  */
 public class ASExplorer
 {
+    private static Logger logger = Logger.getLogger(ASExplorer.class);
 
     /**
      * Main class
@@ -18,17 +21,21 @@ public class ASExplorer
      */
     public static void main(String[] args)
     {
-        Config as = ASExplorer.parseArguments(args);
+        // Init log4j subsystem
+        BasicConfigurator.configure();
 
+        // Parse command line arguments
+        Config as = ASExplorer.parseArguments(args);
         if (as.isValid() == false) {
             ASExplorer.showUsage();
             System.exit(1);
         }
 
-        InitialContext ctx = as.getBuildContext();
+        InitialContext ctx = as.buildContext();
         if (ctx == null) {
             System.exit(1);
         }
+        as.getSelectedCommand().exec(ctx);
     }
 
     /**
@@ -44,6 +51,7 @@ public class ASExplorer
 
         // Build allowed arguments list
         LongOpt[] longOptions = {
+            new LongOpt("commlist", LongOpt.NO_ARGUMENT, null, 'C'),
             new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("limit", LongOpt.REQUIRED_ARGUMENT, null, 'l'),
@@ -60,6 +68,10 @@ public class ASExplorer
 
         while ((c = localGetopt.getopt()) != -1) {
             switch (c) {
+                case 'C':
+                    config.displayCommandList();
+                    break;
+
                 case 'c':
                     config.setCommand(localGetopt.getOptarg());
                     break;
@@ -108,17 +120,18 @@ public class ASExplorer
     public static void showUsage()
     {
         System.err.println(
-                "usage: ASExplorer --server host --command cmd [OPTIONS]...\n\n"
-                + "Context control:\n"
-                + "  -h, --help             Show this message\n"
-                + "  -s, --server socket    Specifies the socket to connect to\n"
-                + "  -P, --protocol proto   Specifies the protocol to communicate with AS\n"
-                + "  -t, --type as-type     Set application server type\n"
-                + "\nCommand list:\n"
-                + "  --command cmd          Specify which operation will be issued\n"
-                + "\nOutput control:\n"
-                + "  -v, --verbose          Be verbose\n"
-                + "  -l, --limit num        Set maxinum numeber of rows returned by a SELECT\n");
+                "usage: ASExplorer --server host --command cmd [OPTIONS]...\n\n" +
+                "Context control:\n" +
+                "  -h, --help             Show this message\n" +
+                "  -s, --server socket    Specifies the socket to connect to\n" +
+                "  -P, --protocol proto   Specifies the protocol to communicate with AS\n" +
+                "  -t, --type as-type     Set application server type\n" +
+                "\nCommand list:\n" +
+                "  --commlist             Display all available commands and exit\n" +
+                "  --command cmd          Specify which operation will be issued\n" +
+                "\nOutput control:\n" +
+                "  -v, --verbose          Be verbose\n" +
+                "  -l, --limit num        Set maxinum numeber of rows returned by a SELECT\n");
 
         System.exit(0);
     }

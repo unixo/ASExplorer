@@ -1,20 +1,19 @@
 package asexplorer;
 
+import asexplorer.command.CommandInterface;
+import asexplorer.command.CommandLocator;
 import asexplorer.module.ModuleInterface;
 import asexplorer.module.ModuleLocator;
 import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.URLDecoder;
-import java.security.Permission;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.TreeSet;
 import javax.naming.InitialContext;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -25,23 +24,47 @@ public class Config
 
     static final int DEFAULT_SQL_LIMIT = -1;
     static final String DEFAULT_HOST = "127.0.0.1:0";
+
+    private static Logger logger = Logger.getLogger(Config.class);
+
     /**
      * Remote application server to connect to (ip address:port)
      */
     protected String server;
+
     protected Integer sqlLimit;
+
+    /**
+     * Security option: username to authenticate on remote host
+     */
     protected String username;
+
+    /**
+     * Security option: password to authenticate on remote host
+     */
     protected String password;
+
+    /**
+     * Protocol for application server interactions
+     */
     protected String protocol;
+
+    /**
+     * Selected command to be executed
+     */
     protected String command;
+
     /**
      * Determine if output should be verbose
      */
     protected boolean verbose;
+
     /**
      * Interface to AS module identified by "type" parameter
      */
     protected ModuleInterface selectedModule;
+
+    HashMap<String, CommandInterface> commands;
 
     /**
      * Class constructor
@@ -68,25 +91,29 @@ public class Config
         try {
             this.loadExternalArchives();
         } catch (Exception e) {
+            logger.debug("Unable to load external archives");
         }
+
+        // load all available commands
+        this.commands = CommandLocator.getCommands();
     }
 
+    /**
+     * Dynamically loads additional JARs located in "lib/ext" directory
+     *
+     * @throws MalformedURLException
+     */
     private void loadExternalArchives() throws MalformedURLException
     {
-        String path = Config.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String decodedPath = null;
-        try {
-            decodedPath = URLDecoder.decode(path, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-        }
-
         File pluginDir = new File("lib/ext");
         File[] plugins = pluginDir.listFiles();
         LinkedList list = new LinkedList();
 
+        logger.debug("plugins: "+plugins.length);
+
         if (plugins != null) {
             for (int i = 0; i < plugins.length; i++) {
-                // logger.debug("Found " + plugins[i].toURL());
+                logger.debug("Found JAR: " + plugins[i].toURL());
                 list.add(plugins[i].toURL());
             }
         }
@@ -221,13 +248,18 @@ public class Config
         this.protocol = protocol;
     }
 
-    public InitialContext getBuildContext()
+    public InitialContext buildContext()
     {
         InitialContext ctx = this.selectedModule.buildInitialContext(this);
 
         return ctx;
     }
 
+    /**
+     * Check if user-specified parameters are valid to operate
+     *
+     * @return True if configuration is valid
+     */
     public boolean isValid()
     {
         if (this.server == null) {
@@ -246,8 +278,7 @@ public class Config
             return false;
         }
 
-        if ((this.username != null && this.password == null)
-                || (this.username == null && this.password != null)) {
+        if ((this.username != null && this.password == null) || (this.username == null && this.password != null)) {
             System.err.println("Incomplete credentials\n");
 
             return false;
@@ -256,10 +287,27 @@ public class Config
         return true;
     }
 
-    protected void verboseDebug(String msg)
+    public void displayCommandList()
     {
-        if (this.verbose == true) {
-            System.err.println(msg);
+        TreeSet<String> keys = new TreeSet<String>(commands.keySet());
+
+        for (String key : keys) {
+            CommandInterface value = commands.get(key);
+
+            System.out.println(key+"\t\t"+value.getDescription());
         }
+
+        System.exit(1);
+    }
+
+    public CommandInterface getSelectedCommand()
+    {
+        if (this.command == null) {
+            return null;
+        }
+
+        CommandInterface ci = this.commands.get(this.command);
+
+        return ci;
     }
 }

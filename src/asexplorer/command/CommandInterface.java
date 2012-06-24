@@ -1,8 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package asexplorer.command;
+
+import javax.naming.InitialContext;
 
 /**
  *
@@ -13,4 +11,6 @@ public interface CommandInterface
   public String getCommandName();
 
   public String getDescription();
+
+  public boolean exec(InitialContext ctx);
 }
