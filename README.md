@@ -9,3 +9,9 @@ Main features
 * built-in support for **Weblogic** and **JBoss**
 * automatic discover SQL *datasource*
 * automatic loading of external libraries (*JARs*) to interact with AS
+
+TODO
+----
+* refactor shared code of ModuleLocator and CommandLocator
+* log4j integration
+* each ModuleInterface implementation must validate protocol selection
