@@ -1,4 +1,4 @@
-package asexplorer.module;
+package asexplorer.server;
 
 import asexplorer.Config;
 import java.util.Properties;
@@ -6,17 +6,13 @@ import javax.naming.CommunicationException;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author unixo
  */
-public class JBoss implements ModuleInterface
+public class JBoss extends ServerBase
 {
-    private static Logger logger = Logger.getLogger(JBoss.class);
-
-    private InitialContext ctx = null;
 
     @Override
     public String getName()
@@ -37,13 +33,13 @@ public class JBoss implements ModuleInterface
     }
 
     @Override
-    public InitialContext buildInitialContext(Config config)
+    public InitialContext getInitialContext()
     {
-        if (this.ctx == null) {
-            Properties props = null;
+        if (this.context == null) {
+            Config config = Config.getInstance();
 
             try {
-                props = new Properties();
+                Properties props = new Properties();
 
                 // Add initial context factory type
                 props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
@@ -60,17 +56,18 @@ public class JBoss implements ModuleInterface
                 String url = String.format("%s://%s", protocol, config.getServer());
                 props.put(Context.PROVIDER_URL, url);
 
-                this.ctx = new InitialContext(props);
+                this.context = new InitialContext(props);
             } catch (CommunicationException cex) {
                 System.err.println("Unable to connect to remote server");
             } catch (NamingException nex) {
                 System.err.println("Unable to create initial context (missing libraries?)");
-                logger.debug('('+ props.toString() + ')');
+                // @todo eliminare :logger.debug('('+ props.toString() + ')');
 
                 System.out.println(nex);
             }
         }
 
-        return this.ctx;
+        return this.context;
     }
+
 }

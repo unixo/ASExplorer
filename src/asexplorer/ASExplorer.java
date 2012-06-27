@@ -1,9 +1,7 @@
 package asexplorer;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-import javax.naming.InitialContext;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -12,7 +10,7 @@ import org.apache.log4j.Logger;
  */
 public class ASExplorer
 {
-    private static Logger logger = Logger.getLogger(ASExplorer.class);
+    public static Logger logger = Logger.getLogger(Config.class);
 
     /**
      * Main class
@@ -21,101 +19,20 @@ public class ASExplorer
      */
     public static void main(String[] args)
     {
-        // Init log4j subsystem
+        // Init log4j
         BasicConfigurator.configure();
+        ASExplorer.logger.setLevel((Level) Level.INFO);
+
+        // Load available commands
+        CommandManager.getInstance().loadCommands();
 
         // Parse command line arguments
-        Config as = ASExplorer.parseArguments(args);
-        if (as.isValid() == false) {
-            ASExplorer.showUsage();
-            System.exit(1);
-        }
+        Config.getInstance().parseArguments(args);
 
-        InitialContext ctx = as.buildContext();
-        if (ctx == null) {
-            System.exit(1);
-        }
-        as.getSelectedCommand().exec(ctx);
+        // Execute requested command
+        CommandManager.getInstance().exec();
     }
 
-    /**
-     * Parse command line arguments and return remote server configuration
-     *
-     * @param args
-     * @return ASServer
-     */
-    public static Config parseArguments(String[] args)
-    {
-        Config config = new Config();
-        int c;
-
-        // Build allowed arguments list
-        LongOpt[] longOptions = {
-            new LongOpt("commlist", LongOpt.NO_ARGUMENT, null, 'C'),
-            new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
-            new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
-            new LongOpt("limit", LongOpt.REQUIRED_ARGUMENT, null, 'l'),
-            new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
-            new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'P'),
-            new LongOpt("server", LongOpt.REQUIRED_ARGUMENT, null, 's'),
-            new LongOpt("type", LongOpt.REQUIRED_ARGUMENT, null, 't'),
-            new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),};
-
-        // Start parsing
-        Getopt localGetopt = new Getopt("ASExplorer", args, "hl:p:s:t:v", longOptions);
-        localGetopt.setOpterr(false);
-
-        while ((c = localGetopt.getopt()) != -1) {
-            switch (c) {
-                case 'C':
-                    config.displayCommandList();
-                    break;
-
-                case 'c':
-                    config.setCommand(localGetopt.getOptarg());
-                    break;
-
-                case 'h':
-                    ASExplorer.showUsage();
-                    break;
-
-                case 'l':
-                    config.setSqlLimit(localGetopt.getOptarg());
-                    break;
-
-                case 'p':
-                    config.setPassword(localGetopt.getOptarg());
-                    break;
-
-                case 'P':
-                    config.setProtocol(localGetopt.getOptarg());
-                    break;
-
-                case 's':
-                    config.setServer(localGetopt.getOptarg());
-                    break;
-
-                case 't':
-                    config.setType(localGetopt.getOptarg());
-                    break;
-
-                case 'u':
-                    config.setUsername(localGetopt.getOptarg());
-                    break;
-
-                case 'v':
-                    config.setVerbose(true);
-                    break;
-
-                default:
-                    System.err.println("Invalid parameter(s)\n");
-                    ASExplorer.showUsage();
-            }
-        }
-
-        return config;
-    }
 
     public static void showUsage()
     {
@@ -127,11 +44,11 @@ public class ASExplorer
                 "  -P, --protocol proto   Specifies the protocol to communicate with AS\n" +
                 "  -t, --type as-type     Set application server type\n" +
                 "\nCommand list:\n" +
-                "  --commlist             Display all available commands and exit\n" +
                 "  --command cmd          Specify which operation will be issued\n" +
+                "  --commlist             Display all available commands and exit\n" +
+                "  --commhelp cmd         Show help of selected command and exit\n" +
                 "\nOutput control:\n" +
-                "  -v, --verbose          Be verbose\n" +
-                "  -l, --limit num        Set maxinum numeber of rows returned by a SELECT\n");
+                "  -v, --verbose          Be verbose\n");
 
         System.exit(0);
     }

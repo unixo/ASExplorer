@@ -7,11 +7,21 @@ or JBoss; especially useful if you're enforcing security.
 Main features
 -------------
 * built-in support for **Weblogic** and **JBoss**
+* JNDI resources browsing
 * automatic discover SQL *datasource*
 * automatic loading of external libraries (*JARs*) to interact with AS
 
+Examples
+--------
+
+``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse --verbose
+/
+  |- UserTransactionSessionFactory ($Proxy218)
+  |- UUIDKeyGeneratorFactory (org.jboss.ejb.plugins.keygenerator.uuid.UUIDKeyGeneratorFactory)
+  |- SecureManagementView (org.jnp.interfaces.NamingContext)
+  [...]
+``
+
 TODO
 ----
-* refactor shared code of ModuleLocator and CommandLocator
-* log4j integration
-* each ModuleInterface implementation must validate protocol selection
+* complete log4j integration

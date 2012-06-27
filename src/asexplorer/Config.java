@@ -1,19 +1,16 @@
 package asexplorer;
 
-import asexplorer.command.CommandInterface;
-import asexplorer.command.CommandLocator;
-import asexplorer.module.ModuleInterface;
-import asexplorer.module.ModuleLocator;
+import asexplorer.server.ServerBase;
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.TreeSet;
-import javax.naming.InitialContext;
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
+import org.apache.log4j.Level;
 
 /**
  *
@@ -22,17 +19,10 @@ import org.apache.log4j.Logger;
 public class Config
 {
 
-    static final int DEFAULT_SQL_LIMIT = -1;
-    static final String DEFAULT_HOST = "127.0.0.1:0";
-
-    private static Logger logger = Logger.getLogger(Config.class);
-
     /**
      * Remote application server to connect to (ip address:port)
      */
     protected String server;
-
-    protected Integer sqlLimit;
 
     /**
      * Security option: username to authenticate on remote host
@@ -55,47 +45,139 @@ public class Config
     protected String command;
 
     /**
-     * Determine if output should be verbose
+     * If true, application logs will be more verbose
      */
     protected boolean verbose;
 
     /**
      * Interface to AS module identified by "type" parameter
      */
-    protected ModuleInterface selectedModule;
-
-    HashMap<String, CommandInterface> commands;
+    protected ServerBase serverType;
 
     /**
      * Class constructor
      */
-    public Config()
+    private Config()
     {
-        setDefaults();
-    }
-
-    /**
-     * Initialize class
-     */
-    private void setDefaults()
-    {
-        // default values
-        this.server = Config.DEFAULT_HOST;
-        this.sqlLimit = Config.DEFAULT_SQL_LIMIT;
+        // Set default values
         this.verbose = false;
+        this.server = "127.0.0.1:0";
         this.protocol = null;
-        this.selectedModule = null;
+        this.serverType = null;
         this.command = null;
 
         // load external JARs to resolve dependencies
-        try {
-            this.loadExternalArchives();
-        } catch (Exception e) {
-            logger.debug("Unable to load external archives");
+        loadExternalArchives();
+    }
+
+    /**
+     * Returns (unique) instance of configuration
+     *
+     * @return Singleton instance
+     */
+    public static Config getInstance()
+    {
+        return ConfigHolder.INSTANCE;
+    }
+
+    private static class ConfigHolder
+    {
+
+        private static final Config INSTANCE = new Config();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ASServer{" + "server=" + server + ", protocol=" + protocol
+                + ", username=" + username + ", password=" + password
+                + ", command=" + command + '}';
+    }
+
+    /**
+     * Parse command line arguments
+     */
+    public void parseArguments(String[] args)
+    {
+        // Build allowed arguments list
+        ArrayList<LongOpt> knownParameters = new ArrayList<LongOpt>();
+
+        knownParameters.add(new LongOpt("commlist", LongOpt.NO_ARGUMENT, null, 'C'));
+        knownParameters.add(new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'));
+        knownParameters.add(new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'));
+        knownParameters.add(new LongOpt("password", LongOpt.REQUIRED_ARGUMENT, null, 'p'));
+        knownParameters.add(new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'P'));
+        knownParameters.add(new LongOpt("server", LongOpt.REQUIRED_ARGUMENT, null, 's'));
+        knownParameters.add(new LongOpt("type", LongOpt.REQUIRED_ARGUMENT, null, 't'));
+        knownParameters.add(new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'));
+        knownParameters.add(new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'));
+
+        // Get list of parameters parsed by commands
+        knownParameters.addAll(CommandManager.getInstance().getCommandParameters());
+
+        // Start parsing
+        LongOpt[] longOpts = new LongOpt[knownParameters.size()];
+        knownParameters.toArray(longOpts);
+        Getopt localGetopt = new Getopt("ASExplorer", args, "hp:s:t:v", longOpts);
+        localGetopt.setOpterr(false);
+
+        int c;
+        while ((c = localGetopt.getopt()) != -1) {
+            switch (c) {
+                case 'C':
+                    CommandManager.getInstance().displayCommandList();
+                    System.exit(1);
+                    break;
+
+                case 'c':
+                    setCommand(localGetopt.getOptarg());
+                    break;
+
+                case 'h':
+                    ASExplorer.showUsage();
+                    break;
+
+                case 'p':
+                    setPassword(localGetopt.getOptarg());
+                    break;
+
+                case 'P':
+                    setProtocol(localGetopt.getOptarg());
+                    break;
+
+                case 's':
+                    setServer(localGetopt.getOptarg());
+                    break;
+
+                case 't':
+                    setType(localGetopt.getOptarg());
+                    break;
+
+                case 'u':
+                    setUsername(localGetopt.getOptarg());
+                    break;
+
+                case 'v':
+                    this.verbose = true;
+                    ASExplorer.logger.setLevel((Level) Level.DEBUG);
+                    break;
+
+                default:
+                    int index = localGetopt.getLongind();
+                    String aParam = longOpts[index].getName();
+                    String aValue = localGetopt.getOptarg();
+                    boolean success = CommandManager.getInstance().parseParameter(aParam, aValue);
+                    if (success == false) {
+                        System.err.println("Invalid parameter(s)\n");
+                        ASExplorer.showUsage();
+                    }
+            }
         }
 
-        // load all available commands
-        this.commands = CommandLocator.getCommands();
+        if (this.isValid() == false) {
+            ASExplorer.showUsage();
+            System.exit(1);
+        }
     }
 
     /**
@@ -103,18 +185,22 @@ public class Config
      *
      * @throws MalformedURLException
      */
-    private void loadExternalArchives() throws MalformedURLException
+    private void loadExternalArchives()
     {
         File pluginDir = new File("lib/ext");
         File[] plugins = pluginDir.listFiles();
         LinkedList list = new LinkedList();
 
-        logger.debug("plugins: "+plugins.length);
+        ASExplorer.logger.debug("plugins: " + plugins.length);
 
         if (plugins != null) {
-            for (int i = 0; i < plugins.length; i++) {
-                logger.debug("Found JAR: " + plugins[i].toURL());
-                list.add(plugins[i].toURL());
+            try {
+                for (int i = 0; i < plugins.length; i++) {
+                    ASExplorer.logger.debug("Found JAR: " + plugins[i].toURL());
+                    list.add(plugins[i].toURL());
+                }
+            } catch (MalformedURLException me) {
+                ASExplorer.logger.debug("Unable to load external archives");
             }
         }
 
@@ -122,12 +208,37 @@ public class Config
         Thread.currentThread().setContextClassLoader(new URLClassLoader(pluginURLs, Thread.currentThread().getContextClassLoader()));
     }
 
-    @Override
-    public String toString()
+    /**
+     * Set type of application server to connect to. This method dynamically
+     * searches a class which extends "ServerBase" and declares to be
+     * able to manage specified type.
+     *
+     * @param type String representing type of application server
+     */
+    public void setType(String type)
     {
-        return "ASServer{" + "server=" + server + ", protocol=" + protocol
-                + ", sqlLimit=" + sqlLimit + ", username=" + username + ", password=" + password
-                + ", verbose=" + verbose + ", command=" + command + '}';
+        Class[] classes = ClassFinder.getClassesInPackage("asexplorer.server");
+        ArrayList<String> knownTypes = new ArrayList<String>();
+
+        for (Class aClass : classes) {
+            if (aClass.getSuperclass().equals(ServerBase.class)) {
+                try {
+                    ServerBase aServer = (ServerBase) aClass.newInstance();
+                    knownTypes.add(aServer.getType());
+
+                    if (aServer.getType().equalsIgnoreCase(type)) {
+                        this.serverType = aServer;
+
+                        return;
+                    }
+                } catch (Exception ex) {
+                    ASExplorer.logger.error("Server type error");
+                }
+            }
+        }
+
+        this.serverType = null;
+        System.err.println("Server type not supported (allowed values: " + knownTypes + ')');
     }
 
     public String getPassword()
@@ -150,64 +261,6 @@ public class Config
         this.server = server;
     }
 
-    public Integer getSqlLimit()
-    {
-        return sqlLimit;
-    }
-
-    public void setSqlLimit(Integer sqlLimit)
-    {
-        this.sqlLimit = sqlLimit;
-    }
-
-    public void setSqlLimit(String sqlLimit)
-    {
-        try {
-            this.sqlLimit = Integer.parseInt(sqlLimit);
-        } catch (Exception e) {
-            System.err.println("Invalid limit");
-            this.sqlLimit = -1;
-        }
-    }
-
-    /**
-     * Set type of application server to connect to. This method dinamically
-     * searches a class which implements "ModuleInterface" and declares to be
-     * able to manage specified type.
-     *
-     * @param type String representing type of application server
-     */
-    public void setType(String type)
-    {
-        // Get all active modules
-        Class<ModuleInterface>[] modules = ModuleLocator.getModules();
-        ArrayList<String> knownTypes = new ArrayList<String>();
-
-        // Search for a module whose type is equal to given parameter
-        for (Class<ModuleInterface> aClassModule : modules) {
-            ModuleInterface mi;
-
-            try {
-                mi = aClassModule.newInstance();
-            } catch (Exception ex) {
-                continue;
-            }
-
-            knownTypes.add(mi.getType());
-
-            // A proper module has been found: use it
-            if (mi.getType().equalsIgnoreCase(type)) {
-                this.selectedModule = mi;
-
-                return;
-            }
-        }
-
-        // If we're here, no modules were found, shows error
-        this.selectedModule = null;
-        System.err.println("Server type not supported (allowed values: " + knownTypes + ')');
-    }
-
     public String getCommand()
     {
         return command;
@@ -228,16 +281,6 @@ public class Config
         this.username = username;
     }
 
-    public boolean isVerbose()
-    {
-        return verbose;
-    }
-
-    public void setVerbose(boolean verbose)
-    {
-        this.verbose = verbose;
-    }
-
     public String getProtocol()
     {
         return protocol;
@@ -248,11 +291,14 @@ public class Config
         this.protocol = protocol;
     }
 
-    public InitialContext buildContext()
+    public ServerBase getServerType()
     {
-        InitialContext ctx = this.selectedModule.buildInitialContext(this);
+        return serverType;
+    }
 
-        return ctx;
+    public boolean isVerbose()
+    {
+        return verbose;
     }
 
     /**
@@ -260,7 +306,7 @@ public class Config
      *
      * @return True if configuration is valid
      */
-    public boolean isValid()
+    protected boolean isValid()
     {
         if (this.server == null) {
             System.err.println("Invalid host\n");
@@ -268,13 +314,7 @@ public class Config
             return false;
         }
 
-        if (this.selectedModule == null) {
-            return false;
-        }
-
-        if (this.command == null) {
-            System.err.println("No command was specified\n");
-
+        if (this.serverType == null) {
             return false;
         }
 
@@ -285,29 +325,5 @@ public class Config
         }
 
         return true;
-    }
-
-    public void displayCommandList()
-    {
-        TreeSet<String> keys = new TreeSet<String>(commands.keySet());
-
-        for (String key : keys) {
-            CommandInterface value = commands.get(key);
-
-            System.out.println(key+"\t\t"+value.getDescription());
-        }
-
-        System.exit(1);
-    }
-
-    public CommandInterface getSelectedCommand()
-    {
-        if (this.command == null) {
-            return null;
-        }
-
-        CommandInterface ci = this.commands.get(this.command);
-
-        return ci;
     }
 }
