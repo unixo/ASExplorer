@@ -95,7 +95,9 @@ public class CommandManager
         } else {
             CommandBase aCommand = allCommands.get(aCmdName);
             InitialContext ctx = Config.getInstance().getServerType().getInitialContext();
-            aCommand.exec(ctx);
+            if (ctx != null) {
+                aCommand.exec(ctx);
+            }
         }
     }
 }

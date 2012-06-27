@@ -82,7 +82,6 @@ public class Config
 
     private static class ConfigHolder
     {
-
         private static final Config INSTANCE = new Config();
     }
 
@@ -188,8 +187,14 @@ public class Config
     private void loadExternalArchives()
     {
         File pluginDir = new File("lib/ext");
-        File[] plugins = pluginDir.listFiles();
         LinkedList list = new LinkedList();
+        File[] plugins = pluginDir.listFiles();
+
+        if (plugins == null) {
+            ASExplorer.logger.warn("Unable to load external archives (lib/ext directory not found)");
+
+            return;
+        }
 
         ASExplorer.logger.debug("plugins: " + plugins.length);
 
