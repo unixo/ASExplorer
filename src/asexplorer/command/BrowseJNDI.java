@@ -15,15 +15,19 @@ import javax.naming.NamingException;
 public class BrowseJNDI extends CommandBase
 {
     private static final int indentLevel = 2;
+    private static final int UNLIMITED = -1;
 
     protected String root;
 
     protected int depth;
 
+    private int currentDepth;
+
     public BrowseJNDI()
     {
         this.root = "";
-        this.depth = -1;
+        this.depth = UNLIMITED;
+        this.currentDepth = 0;
     }
 
     @Override
@@ -41,6 +45,7 @@ public class BrowseJNDI extends CommandBase
     @Override
     public void exec(InitialContext ctx)
     {
+        this.currentDepth = 0;
         System.out.println("/" + this.root);
         enumerate(ctx, this.root, 2);
     }
@@ -49,6 +54,10 @@ public class BrowseJNDI extends CommandBase
     {
         try {
             NamingEnumeration ne = ctx.list(name);
+            if (this.depth != UNLIMITED && this.currentDepth >= this.depth) {
+                return;
+            }
+            this.currentDepth++;
             recurse(ctx, ne, name, indent);
         } catch (NamingException ex) {
         }
@@ -109,6 +118,8 @@ public class BrowseJNDI extends CommandBase
 
                 return false;
             }
+
+            this.depth = Integer.parseInt(value);
         } else {
             return false;
         }
