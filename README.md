@@ -1,27 +1,33 @@
-Introduction
-------------
+# Introduction #
 
-ASExplorer is a tool to interact with an application server, such as Weblogic
-or JBoss; especially useful if you're enforcing security.
+ASExplorer is a tool useful to browse resources exposed by an application server, 
+such as Weblogic or JBoss; especially useful if you're enforcing security.
 
-Main features
--------------
+## Main features ##
 * built-in support for **Weblogic** and **JBoss**
 * JNDI resources browsing
 * automatic discover SQL *datasource*
 * automatic loading of external libraries (*JARs*) to interact with AS
 
-Examples
---------
+## Examples ##
 
-``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse --verbose
+### Enumerate all JNDI resources exposed by application server ###
+
+``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse
 /
-  |- UserTransactionSessionFactory ($Proxy218)
-  |- UUIDKeyGeneratorFactory (org.jboss.ejb.plugins.keygenerator.uuid.UUIDKeyGeneratorFactory)
-  |- SecureManagementView (org.jnp.interfaces.NamingContext)
+  |- UserTransactionSessionFactory
+  |- UUIDKeyGeneratorFactory
+  |- SecureManagementView
   [...]
 ``
 
-TODO
-----
+### Automatic datasources enumeration ###
+
+``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command enumds``
+
+### Inspect a class with reflection ###
+
+``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command inspect --class jmx/invoker``
+
+## TODO ##
 * complete log4j integration
