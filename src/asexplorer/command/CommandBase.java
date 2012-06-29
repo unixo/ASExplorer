@@ -25,5 +25,5 @@ abstract public class CommandBase
 
     abstract public String getDescription();
 
-    abstract public boolean exec(InitialContext ctx);
+    abstract public void exec(InitialContext ctx);
 }
