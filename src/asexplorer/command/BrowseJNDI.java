@@ -39,19 +39,17 @@ public class BrowseJNDI extends CommandBase
     }
 
     @Override
-    public boolean exec(InitialContext ctx)
+    public void exec(InitialContext ctx)
     {
         System.out.println("/" + this.root);
         enumerate(ctx, this.root, 2);
-
-        return true;
     }
 
     protected void enumerate(InitialContext ctx, String name, int indent)
     {
         try {
-            NamingEnumeration e = ctx.list(name);
-            recurse(ctx, e, name, indent);
+            NamingEnumeration ne = ctx.list(name);
+            recurse(ctx, ne, name, indent);
         } catch (NamingException ex) {
         }
     }
@@ -75,8 +73,8 @@ public class BrowseJNDI extends CommandBase
 
             // recurse
             enumerate(ctx,
-                     (parentCtx.length() == 0) ? next.getName() : parentCtx + "/" + next.getName(),
-                     indent+indentLevel);
+                      (parentCtx.length() == 0) ? next.getName() : parentCtx + "/" + next.getName(),
+                      indent+indentLevel);
         }
     }
 
