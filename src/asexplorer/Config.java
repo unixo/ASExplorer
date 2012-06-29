@@ -9,7 +9,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.logging.Logger;
 import org.apache.log4j.Level;
 
 /**
@@ -22,50 +21,43 @@ public class Config
     /**
      * Remote application server to connect to (ip address:port)
      */
-    protected String server;
+    protected String server = "127.0.0.1:0";
 
     /**
      * Security option: username to authenticate on remote host
      */
-    protected String username;
+    protected String username = null;
 
     /**
      * Security option: password to authenticate on remote host
      */
-    protected String password;
+    protected String password = null;
 
     /**
      * Protocol for application server interactions
      */
-    protected String protocol;
+    protected String protocol = null;
 
     /**
      * Selected command to be executed
      */
-    protected String command;
+    protected String command = null;
 
     /**
      * If true, application logs will be more verbose
      */
-    protected boolean verbose;
+    protected boolean verbose = false;
 
     /**
      * Interface to AS module identified by "type" parameter
      */
-    protected ServerBase serverType;
+    protected ServerBase serverType = null;
 
     /**
      * Class constructor
      */
     private Config()
     {
-        // Set default values
-        this.verbose = false;
-        this.server = "127.0.0.1:0";
-        this.protocol = null;
-        this.serverType = null;
-        this.command = null;
-
         // load external JARs to resolve dependencies
         loadExternalArchives();
     }
@@ -167,7 +159,7 @@ public class Config
                     String aValue = localGetopt.getOptarg();
                     boolean success = CommandManager.getInstance().parseParameter(aParam, aValue);
                     if (success == false) {
-                        System.err.println("Invalid parameter(s)\n");
+                        System.err.println("Unmanaged parameter(s)\n");
                         ASExplorer.showUsage();
                     }
             }
