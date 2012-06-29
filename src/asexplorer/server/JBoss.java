@@ -53,7 +53,15 @@ public class JBoss extends ServerBase
 
                 // Set URI
                 String protocol = (config.getProtocol() != null) ? config.getProtocol() : this.getDefaultProtocol();
+                
+                // Check if user requested http/https protocol
+                if (protocol.substring(0,4).equalsIgnoreCase("http")) {
+                    props.setProperty("java.naming.factory.initial","org.jboss.naming.HttpNamingContextFactory");
+                }
                 String url = String.format("%s://%s", protocol, config.getServer());
+
+                asexplorer.ASExplorer.logger.debug('('+ props.toString() + ')');
+
                 props.put(Context.PROVIDER_URL, url);
 
                 this.context = new InitialContext(props);
@@ -61,7 +69,6 @@ public class JBoss extends ServerBase
                 System.err.println("Unable to connect to remote server");
             } catch (NamingException nex) {
                 System.err.println("Unable to create initial context (missing libraries?)");
-                // @todo eliminare :logger.debug('('+ props.toString() + ')');
 
                 System.out.println(nex);
             }
