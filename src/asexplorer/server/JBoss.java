@@ -53,9 +53,9 @@ public class JBoss extends ServerBase
 
                 // Set URI
                 String protocol = (config.getProtocol() != null) ? config.getProtocol() : this.getDefaultProtocol();
-                
+
                 // Check if user requested http/https protocol
-                if (protocol.substring(0,4).equalsIgnoreCase("http")) {
+                if (protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https")) {
                     props.setProperty("java.naming.factory.initial","org.jboss.naming.HttpNamingContextFactory");
                 }
                 String url = String.format("%s://%s", protocol, config.getServer());
