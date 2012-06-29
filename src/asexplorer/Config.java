@@ -154,10 +154,16 @@ public class Config
                     break;
 
                 default:
+                    boolean success;
                     int index = localGetopt.getLongind();
-                    String aParam = longOpts[index].getName();
-                    String aValue = localGetopt.getOptarg();
-                    boolean success = CommandManager.getInstance().parseParameter(aParam, aValue);
+                    
+                    if (index != -1) {
+                        String aParam = longOpts[index].getName();
+                        String aValue = localGetopt.getOptarg();
+                        success = CommandManager.getInstance().parseParameter(aParam, aValue);
+                    } else {
+                        success = false;
+                    }
                     if (success == false) {
                         System.err.println("Unmanaged parameter(s)\n");
                         ASExplorer.showUsage();
