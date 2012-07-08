@@ -9,6 +9,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
 /**
+ * Browse global JNDI namespace
  *
  * @author unixo
  */
@@ -46,8 +47,8 @@ public class BrowseJNDI extends CommandBase
     public void exec(InitialContext ctx)
     {
         this.currentDepth = 0;
-        System.out.println("/" + this.root);
-        enumerate(ctx, this.root, 2);
+        System.out.println("|" + this.root);
+        enumerate(ctx, this.root, 0);
     }
 
     protected void enumerate(InitialContext ctx, String name, int indent)
@@ -69,15 +70,18 @@ public class BrowseJNDI extends CommandBase
             NameClassPair next = (NameClassPair) ne.nextElement();
 
             // indent entry
-            for (int i = 0; i < indent; i++) {
-                System.out.print(' ');
+            if (indent > 0) {
+                System.out.print("| ");
+                for (int i = 0; i < indent; i++) {
+                    System.out.print(' ');
+                }
             }
 
             // Print entry name (and class name, if verbose output)
             if (Config.getInstance().isVerbose()) {
-                System.out.println("|- "+next.getName() + " (" + next.getClassName() + ')');
+                System.out.println("+- "+next.getName() + " (" + next.getClassName() + ')');
             } else {
-                System.out.println("|- "+next.getName());
+                System.out.println("+- "+next.getName());
             }
 
             // recurse
