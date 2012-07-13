@@ -1,20 +1,48 @@
 package asexplorer.command;
 
-import javax.naming.Reference;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import javax.naming.NameClassPair;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.sql.DataSource;
 
 /**
+ * Try to find datasources in JNDI global namespace
  *
  * @author unixo
  */
 public class EnumDS extends CommandBase
 {
-    ArrayList<String> datasources = null;
+
+    //ArrayList<String> versionSQL = null;
+    protected HashMap<String, String> versionSQL = null;
+    protected ArrayList<String> datasources = null;
+    protected InitialContext context;
+
+    public EnumDS()
+    {
+        datasources = new ArrayList<String>();
+
+        /*
+        this.versionSQL = new ArrayList<String>();
+        this.versionSQL.add("SELECT @@version");
+        this.versionSQL.add("SELECT * FROM v$version");
+        */
+
+        versionSQL = new HashMap<String, String>();
+        versionSQL.put("MySQL", "SELECT @@version");
+        versionSQL.put("Oracle", "SELECT * FROM v$version");
+    }
 
     @Override
     public String getCommandName()
@@ -31,12 +59,17 @@ public class EnumDS extends CommandBase
     @Override
     public void exec(InitialContext ctx)
     {
-        datasources = new ArrayList<String>();
-        enumerate(ctx, "");
+        this.datasources.clear();
+        this.context = ctx;
 
+        // Browse JNDI tree looking for datasources
+        enumerate("");
+
+        // Print enumeration results, if any
         System.out.println("Found " + this.datasources.size() + " datasource(s)");
         if (this.datasources.size() > 0) {
             Iterator<String> it = this.datasources.iterator();
+
             while (it.hasNext()) {
                 String ds = (String) it.next();
                 System.out.println(ds);
@@ -44,43 +77,63 @@ public class EnumDS extends CommandBase
         }
     }
 
-    protected void enumerate(InitialContext ctx, String name)
+    protected void enumerate(String name)
     {
-        System.out.println("Trying to enumerate: "+name);
+        NamingEnumeration ne = null;
+
         try {
+            ne = this.context.list(name);
+        } catch (NamingException ex) {
+        }
 
-            NamingEnumeration ne = ctx.list(name);
-
-            while (ne.hasMoreElements()) {
+        while (ne.hasMoreElements()) {
+            try {
                 NameClassPair next = (NameClassPair) ne.nextElement();
 
                 String resName = next.getName();
-                Object anObject = ctx.lookup(resName);
+                discoverDsType(resName);
 
-                analyzeResource(anObject, resName);
-
-                enumerate(ctx, (name.length() == 0) ? next.getName() : name + "/" + next.getName());
+                // recurse on children
+                enumerate((name.length() == 0) ? next.getName() : name + "/" + next.getName());
+            } catch (Exception ex) {
             }
-
-        } catch (Exception ex) {
-            System.err.println("naming exception: "+ex.toString());
         }
     }
 
-    protected void analyzeResource(Object anObject, String resName)
+    protected void discoverDsType(String aName)
     {
-        System.out.println("anObject.getClass: "+anObject.getClass());
+        Connection conn;
+        ResultSet rs;
+        Statement stmt;
 
         try {
-            Reference aRef = (Reference) anObject;
-
-            System.out.println("Class name: "+aRef.getClassName());
-            if (aRef.getClassName().equals("javax.sql.DataSource")) {
-                this.datasources.add(resName);
-            }
-        } catch (ClassCastException cce) {
-
+            Object anObject = this.context.lookup(aName);
+            DataSource ds = (DataSource) anObject;
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+        } catch (Exception ex) {
+            return;
         }
-    }
 
+        try {
+            TreeSet<String> keys = new TreeSet<String>(versionSQL.keySet());
+
+            for (String key : keys) {
+                String aSql = versionSQL.get(key);
+
+                try {
+                    rs = stmt.executeQuery(aSql);
+                    StringBuilder sbuff = new StringBuilder();
+
+                    while (rs.next()) {
+                        sbuff.append(rs.getString(1));
+                    }
+                    this.datasources.add(aName + " - " + key + " " + sbuff.toString());
+                } catch (SQLException sex) {
+                }
+            }
+        } catch (Exception ex) {
+        }
+
+    }
 }

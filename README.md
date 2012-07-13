@@ -13,7 +13,8 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 
 ### Enumerate all JNDI resources exposed by application server ###
 
-``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse
+```bash
+java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse
 |
 +- UserTransactionSessionFactory
 +- UUIDKeyGeneratorFactory
@@ -21,15 +22,21 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 +- SecureManagementView
 |   +- remote-org.jboss.deployers.spi.management.ManagementView
 |   +- remote
-``
+```
 
 ### Automatic datasources enumeration ###
 
-``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command enumds``
+```bash 
+java -jar ASExplorer.jar --server localhost:1099 --type jboss --command enumds
+Found 1 datasource(s)
+MySqlDS - MySQL 5.5.13-log
+```
 
 ### Inspect a class with reflection ###
 
-``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command inspect --class jmx/invoker``
+```bash
+java -jar ASExplorer.jar --server localhost:1099 --type jboss --command inspect --class jmx/invoker
+```
 
 ## TODO ##
 * complete log4j integration
