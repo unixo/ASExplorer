@@ -14,11 +14,13 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 ### Enumerate all JNDI resources exposed by application server ###
 
 ``java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse
-/
-  |- UserTransactionSessionFactory
-  |- UUIDKeyGeneratorFactory
-  |- SecureManagementView
-  [...]
+|
++- UserTransactionSessionFactory
++- UUIDKeyGeneratorFactory
++- MySqlDS
++- SecureManagementView
+|   +- remote-org.jboss.deployers.spi.management.ManagementView
+|   +- remote
 ``
 
 ### Automatic datasources enumeration ###
@@ -31,3 +33,4 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 
 ## TODO ##
 * complete log4j integration
+* add GlassFish support
