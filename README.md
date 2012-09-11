@@ -8,6 +8,7 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 * JNDI resources browsing
 * automatic discover SQL *datasource*
 * automatic loading of external libraries (*JARs*) to interact with AS
+* interaction with SQL datasources
 
 ## Examples ##
 
@@ -30,6 +31,16 @@ java -jar ASExplorer.jar --server localhost:1099 --type jboss --command browse
 java -jar ASExplorer.jar --server localhost:1099 --type jboss --command enumds
 Found 1 datasource(s)
 MySqlDS - MySQL 5.5.13-log
+```
+
+### Interaction with SQL datasources
+
+Assuming that the application server is exporting a datasource named "MySqlDS" and it contains a table named "user":
+
+```bash
+java -jar ASExplorer.jar -s 127.0.0.1:1099 -t jboss -c sql-select --sql "SELECT user,host FROM user" --datasource MySqlDS
+User (1) - Host (1) - 
+msandbox - % - root - localhost -
 ```
 
 ### Inspect a class with reflection ###
