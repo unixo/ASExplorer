@@ -109,7 +109,7 @@ public class Config
         // Start parsing
         LongOpt[] longOpts = new LongOpt[knownParameters.size()];
         knownParameters.toArray(longOpts);
-        Getopt localGetopt = new Getopt("ASExplorer", args, "hp:s:t:v", longOpts);
+        Getopt localGetopt = new Getopt("ASExplorer", args, "hc:CP:p:s:t:u:v", longOpts);
         localGetopt.setOpterr(false);
 
         int c;
@@ -156,7 +156,7 @@ public class Config
                 default:
                     boolean success;
                     int index = localGetopt.getLongind();
-                    
+
                     if (index != -1) {
                         String aParam = longOpts[index].getName();
                         String aValue = localGetopt.getOptarg();

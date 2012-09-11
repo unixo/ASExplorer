@@ -69,7 +69,6 @@ public class JBoss extends ServerBase
                 System.err.println("Unable to connect to remote server");
             } catch (NamingException nex) {
                 System.err.println("Unable to create initial context (missing libraries?)");
-
                 System.out.println(nex);
             }
         }

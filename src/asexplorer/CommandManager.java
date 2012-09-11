@@ -57,10 +57,16 @@ public class CommandManager
     {
         TreeSet<String> keys = new TreeSet<String>(allCommands.keySet());
 
-        for (String key : keys) {
-            CommandBase value = allCommands.get(key);
+        if (keys.isEmpty()) {
+            System.err.println("No commands available");
+        } else {
+            System.out.println("Comand    \tDescription\n"+
+                               "---------------------------------------------");
+            for (String key : keys) {
+                CommandBase value = allCommands.get(key);
 
-            System.out.println(key+"\t\t"+value.getDescription());
+                System.out.println(key+"    \t"+value.getDescription());
+            }
         }
     }
 
@@ -103,7 +109,7 @@ public class CommandManager
     public void exec()
     {
         String aCmdName = Config.getInstance().getCommand();
-        
+
         if (aCmdName == null || allCommands.keySet().contains(aCmdName) == false) {
             System.err.println("No command was specified\n");
         } else {
