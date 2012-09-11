@@ -42,6 +42,8 @@ public class ASExplorer
                 "  -h, --help             Show this message\n" +
                 "  -s, --server socket    Specifies the socket to connect to\n" +
                 "  -P, --protocol proto   Specifies the protocol to communicate with AS\n" +
+                "  -u, --user username    Username (principal)\n"+
+                "  -p, --password pwd     Password (credential)\n"+
                 "  -t, --type as-type     Set application server type\n" +
                 "\nCommand list:\n" +
                 "  --command cmd          Specify which operation will be issued\n" +
