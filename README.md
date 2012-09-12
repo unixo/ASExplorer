@@ -10,6 +10,47 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 * automatic loading of external libraries (*JARs*) to interact with AS
 * interaction with SQL datasources
 
+## Installation
+
+To use ASExplorer you'll need:
+
+* a JAVA compiler (javac)
+* a Java based make tool (ant)
+* specific application server libraries
+
+First of all, download the package and build it:
+```bash
+$ cd <*path-to-asexplorer*>
+$ ant
+$ cd dist
+$ mkdir -p lib/ext
+```
+
+Copy all *JAR*s you need to connect in this folder (lib/ext); in my testing environment, I use the following files:
+
+* concurrent.jar
+* cryptojFIPS.jar
+* jboss-client.jar
+* jboss-common-core.jar
+* jboss-integration.jar
+* jboss-jmx.jar
+* jboss-logging-log4j.jar
+* jboss-logging-spi.jar
+* jboss-remoting.jar
+* jboss-security-spi.jar
+* jboss-serialization.jar
+* jbossall-client.jar
+* jbosscx-client.jar
+* jbosssx-client.jar
+* jnp-client.jar
+* ojdbc14.jar
+* webserviceclient+ssl.jar
+* webserviceclient.jar
+* wlcipher.jar
+* wlfullclient.jar
+* wls-api.jar
+* wlthint3client.jar
+
 ## Examples ##
 
 ### Enumerate all JNDI resources exposed by application server ###
