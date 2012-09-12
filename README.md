@@ -6,9 +6,10 @@ such as Weblogic or JBoss; especially useful if you're enforcing security.
 ## Main features ##
 * built-in support for **Weblogic** and **JBoss**
 * JNDI resources browsing
-* automatic discover SQL *datasource*
+* automatic discovering of SQL *datasource*
 * automatic loading of external libraries (*JARs*) to interact with AS
 * interaction with SQL datasources
+* easy to extend
 
 ## Installation
 
@@ -20,7 +21,7 @@ To use ASExplorer you'll need:
 
 First of all, download the package and build it:
 ```bash
-$ cd <*path-to-asexplorer*>
+$ cd <path-to-asexplorer>
 $ ant
 $ cd dist
 $ mkdir -p lib/ext
@@ -53,6 +54,17 @@ Copy all *JAR*s you need to connect in this folder (lib/ext); in my testing envi
 
 ## Examples ##
 
+### Usage
+
+Command line options:
+
+* --server *socket*: application server remote socket (**required**)
+* --type *type*: specify AS type, such as *jboss*, *weblogic* (**required**)
+* --command *name*: command name to use (**required**)
+* --commlist: Display all available commands and exit
+* --commhelp *cmd*: Show help of selected command and exit 
+
+
 ### Enumerate all JNDI resources exposed by application server ###
 
 ```bash
@@ -76,13 +88,28 @@ MySqlDS - MySQL 5.5.13-log
 
 ### Interaction with SQL datasources
 
-Assuming that the application server is exporting a datasource named "MySqlDS" and it contains a table named "user":
+Assuming that your application server is exporting an Oracle-based datasource named "OracleDS":
 
 ```bash
-java -jar ASExplorer.jar -s 127.0.0.1:1099 -t jboss -c sql-select --sql "SELECT user,host FROM user" --datasource MySqlDS
-User (1) - Host (1) - 
-msandbox - % - root - localhost -
+java -jar ASExplorer.jar -s 127.0.0.1:7100 -t weblogic -c sql-select --sql 'SELECT * FROM session_privs' --datasource OracleDS
+| PRIVILEGE 
+| CREATE SESSION 
+| UNLIMITED TABLESPACE 
+| CREATE TABLE 
+| CREATE CLUSTER 
+| CREATE SEQUENCE 
+| CREATE PROCEDURE 
+| CREATE TRIGGER 
+| CREATE TYPE 
+| CREATE OPERATOR 
+| CREATE INDEXTYPE
 ```
+
+Parameters available:
+
+* --datasource name: datasource name to interact (**required**)
+* --sql string: SELECT command to issue (**required**)
+* --colsize num: limit all columns size to 'num' (*optional*)
 
 ### Inspect a class with reflection ###
 
@@ -93,3 +120,4 @@ java -jar ASExplorer.jar --server localhost:1099 --type jboss --command inspect 
 ## TODO ##
 * complete log4j integration
 * add GlassFish support
+* support for DQL queries
