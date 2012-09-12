@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 public class SQLSelect extends CommandBase
 {
     protected Integer limit = -1;
+    protected Integer colSize = 255;
     protected String sql = null;
     protected String dsName = null;
 
@@ -47,6 +48,7 @@ public class SQLSelect extends CommandBase
         params.add(new LongOpt("datasource", LongOpt.REQUIRED_ARGUMENT, null, 100));
         params.add(new LongOpt("limit", LongOpt.REQUIRED_ARGUMENT, null, 101));
         params.add(new LongOpt("sql", LongOpt.REQUIRED_ARGUMENT, null, 102));
+        params.add(new LongOpt("colsize", LongOpt.REQUIRED_ARGUMENT, null, 103));
 
         return params;
     }
@@ -62,8 +64,11 @@ public class SQLSelect extends CommandBase
         } else if (param.equalsIgnoreCase("limit")) {
             this.limit = Integer.parseInt(value);
             retValue = true;
-        } if (param.equalsIgnoreCase("sql")) {
+        } else if (param.equalsIgnoreCase("sql")) {
             this.sql = value;
+            retValue = true;
+        } else if (param.equalsIgnoreCase("colsize")) {
+            this.colSize = Integer.parseInt(value);
             retValue = true;
         }
 
@@ -85,27 +90,35 @@ public class SQLSelect extends CommandBase
                 ds = (DataSource) ctx.lookup(this.dsName);
                 conn = ds.getConnection();
                 stmt = conn.createStatement();
+
+                // limit result set size, if user specified an upper limit
                 if (this.limit != -1)
                     stmt.setMaxRows(this.limit);
+
                 rs = stmt.executeQuery(this.sql);
 
                 // Print all columns
                 ResultSetMetaData rsMetaData = rs.getMetaData();
                 int cols = rsMetaData.getColumnCount();
                 for (int i=1; i<=cols; i++) {
-                    int type = rsMetaData.getColumnType(i);
-                    System.out.print(rsMetaData.getColumnName(i)+" ("+type+") - ");
+                    System.out.format("| %s ", rsMetaData.getColumnName(i));
                 }
                 System.out.println();
 
-                // Print all records returned
+                // Print all returned records
                 while(rs.next()) {
                     for (int i=1; i<=cols; i++) {
-                	System.out.print(rs.getString(i)+" - ");
-                    }
-                }
-                System.out.println();
+                        String value = rs.getString(i);
+                        if (value == null)
+                            value = "NULL";
 
+                        System.out.format("| %."+this.colSize +"s ",value);
+                    }
+                    System.out.println();
+                }
+
+                // Finally close the connection
+                conn.close();
             } catch (NamingException ex) {
                 Logger.getLogger(SQLSelect.class.getName()).log(Level.SEVERE, null, ex);
             } catch (SQLException ex) {
