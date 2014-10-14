@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package asexplorer.server;
 
 import asexplorer.Config;
@@ -57,11 +52,6 @@ public class WebSphere extends ServerBase
 
                 // Set URI
                 String protocol = (config.getProtocol() != null) ? config.getProtocol() : this.getDefaultProtocol();
-
-                // Check if user requested http/https protocol
-                if (protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https")) {
-                    props.setProperty("java.naming.factory.initial","org.jboss.naming.HttpNamingContextFactory");
-                }
                 String url = String.format("%s://%s", protocol, config.getServer());
 
                 asexplorer.ASExplorer.logger.debug('('+ props.toString() + ')');
