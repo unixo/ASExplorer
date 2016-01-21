@@ -42,7 +42,12 @@ public class BrowseJNDI extends CommandBase
     {
         return "Enumerate configured JNDI resources";
     }
-
+    
+    @Override
+    public String getHelp() {
+        return "--root str [--depth num]";
+    }
+    
     @Override
     public void exec(InitialContext ctx)
     {
@@ -66,6 +71,11 @@ public class BrowseJNDI extends CommandBase
 
     protected void recurse(InitialContext ctx, NamingEnumeration ne, String parentCtx, int indent) throws NamingException
     {
+        if (ne == null) {
+            asexplorer.ASExplorer.logger.error("'NamingEnumeration' has no elements");
+            return;
+        }
+
         while (ne.hasMoreElements()) {
             NameClassPair next = (NameClassPair) ne.nextElement();
 
