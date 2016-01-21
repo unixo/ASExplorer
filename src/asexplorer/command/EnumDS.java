@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import javax.naming.NameClassPair;
 import javax.naming.NamingEnumeration;
@@ -17,28 +15,20 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 /**
- * Try to find datasources in JNDI global namespace
+ * Try to find data sources in JNDI global namespace
  *
  * @author unixo
  */
 public class EnumDS extends CommandBase
 {
-
-    //ArrayList<String> versionSQL = null;
-    protected HashMap<String, String> versionSQL = null;
+    protected HashMap<String, String> versionSQL = null;    
     protected ArrayList<String> datasources = null;
     protected InitialContext context;
+    protected InitialContext rootContext;
 
     public EnumDS()
     {
         datasources = new ArrayList<String>();
-
-        /*
-        this.versionSQL = new ArrayList<String>();
-        this.versionSQL.add("SELECT @@version");
-        this.versionSQL.add("SELECT * FROM v$version");
-        */
-
         versionSQL = new HashMap<String, String>();
         versionSQL.put("MySQL", "SELECT @@version");
         versionSQL.put("Oracle", "SELECT * FROM v$version");
@@ -55,16 +45,18 @@ public class EnumDS extends CommandBase
     {
         return "Look for datasources";
     }
-
+    
+    @Override
+    public String getHelp() {
+        return "";
+    }
+    
     @Override
     public void exec(InitialContext ctx)
     {
-        this.datasources.clear();
-        this.context = ctx;
-
-        // Browse JNDI tree looking for datasources
-        enumerate("");
-
+        this.rootContext = ctx;
+        enumerate(ctx, "", "");
+        
         // Print enumeration results, if any
         System.out.println("Found " + this.datasources.size() + " datasource(s)");
         if (this.datasources.size() > 0) {
@@ -77,26 +69,33 @@ public class EnumDS extends CommandBase
         }
     }
 
-    protected void enumerate(String name)
+    protected void enumerate(InitialContext ctx, String name, String fullPath)
     {
-        NamingEnumeration ne = null;
-
         try {
-            ne = this.context.list(name);
+            NamingEnumeration ne = ctx.list(name);            
+            recurse(ctx, ne, name, fullPath);
         } catch (NamingException ex) {
+        }
+    }
+
+    protected void recurse(InitialContext ctx, NamingEnumeration ne, String parentCtx, String fullPath) throws NamingException
+    {
+        if (ne == null) {
+            asexplorer.ASExplorer.logger.error("'NamingEnumeration' has no elements");
+            return;
         }
 
         while (ne.hasMoreElements()) {
-            try {
-                NameClassPair next = (NameClassPair) ne.nextElement();
+            NameClassPair next = (NameClassPair) ne.nextElement();
 
-                String resName = next.getName();
-                discoverDsType(resName);
+            // Print entry name (and class name, if verbose output)
+            String res = fullPath+'.'+next.getName();            
+            this.discoverDsType(res);
 
-                // recurse on children
-                enumerate((name.length() == 0) ? next.getName() : name + "/" + next.getName());
-            } catch (Exception ex) {
-            }
+            // recurse
+            enumerate(ctx,
+                      (parentCtx.length() == 0) ? next.getName() : parentCtx + "/" + next.getName(),
+                      fullPath + '.' + next.getName());
         }
     }
 
@@ -107,9 +106,13 @@ public class EnumDS extends CommandBase
         Statement stmt;
 
         try {
-            Object anObject = this.context.lookup(aName);
+            Object anObject = this.rootContext.lookup(aName);
             DataSource ds = (DataSource) anObject;
             conn = ds.getConnection();
+
+            java.sql.DatabaseMetaData metaData = conn.getMetaData();
+            System.out.format("[%s]: UserName: %s\n", aName, metaData.getUserName());
+
             stmt = conn.createStatement();
         } catch (Exception ex) {
             return;
@@ -134,6 +137,6 @@ public class EnumDS extends CommandBase
             }
         } catch (Exception ex) {
         }
-
     }
+    
 }
