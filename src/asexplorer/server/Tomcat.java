@@ -11,25 +11,25 @@ import javax.naming.NamingException;
  *
  * @author unixo
  */
-public class Weblogic extends ServerBase
+public class Tomcat extends ServerBase
 {
-
-    @Override
-    public String getType()
-    {
-        return "weblogic";
-    }
 
     @Override
     public String getName()
     {
-        return "Weblogic";
+        return "Tomcat";
     }
 
     @Override
-    protected String getDefaultProtocol()
+    public String getType()
     {
-        return "t3";
+        return "tomcat";
+    }
+
+    @Override
+    public String getDefaultProtocol()
+    {
+        return "ejbd";
     }
 
     @Override
@@ -41,8 +41,16 @@ public class Weblogic extends ServerBase
             try {
                 Properties props = new Properties();
 
-                // Add initial context factory type
-                props.put(Context.INITIAL_CONTEXT_FACTORY, "weblogic.jndi.WLInitialContextFactory");
+
+                // Set URI: add initial context factory type
+                String protocol = (config.getProtocol() != null) ? config.getProtocol() : this.getDefaultProtocol();
+
+                // Check if user requested http/https protocol
+                if (protocol.equalsIgnoreCase("http") || protocol.equalsIgnoreCase("https")) {
+                    props.setProperty(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.HttpNamingContextFactory");
+                } else {
+                    props.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.openejb.client.RemoteInitialContextFactory");
+                }
 
                 // Add credentials, if any
                 if (config.getUsername() != null && config.getPassword() != null) {
@@ -50,9 +58,12 @@ public class Weblogic extends ServerBase
                     props.setProperty(Context.SECURITY_CREDENTIALS, config.getPassword());
                 }
 
-                // Set URI
-                String protocol = (config.getProtocol() != null) ? config.getProtocol() : this.getDefaultProtocol();
-                String url = String.format("%s://%s", protocol, config.getServer());
+
+                //String url = String.format("%s://%s", protocol, config.getServer());
+                String url = String.format("%s", config.getServer());
+                System.out.println(">>>>>>>>>>>url: "+url);
+                asexplorer.ASExplorer.logger.debug('('+ props.toString() + ')');
+
                 props.put(Context.PROVIDER_URL, url);
 
                 this.context = new InitialContext(props);
@@ -60,11 +71,10 @@ public class Weblogic extends ServerBase
                 System.err.println("Unable to connect to remote server");
             } catch (NamingException nex) {
                 System.err.println("Unable to create initial context (missing libraries?)");
-                System.err.println(nex);
+                System.out.println(nex);
             }
         }
 
         return this.context;
     }
-
 }
