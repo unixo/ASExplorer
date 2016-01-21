@@ -50,6 +50,13 @@ abstract public class CommandBase
      * @return A string description
      */
     abstract public String getDescription();
+    
+    /**
+     * Returns the parameters required by the specified command
+     * 
+     * @return A string description
+     */
+    abstract public String getHelp();
 
     /**
      * Once connection was established with application server, main asks the

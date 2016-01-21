@@ -6,7 +6,9 @@ import java.net.URL;
 import java.rmi.RMISecurityManager;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import javax.naming.InitialContext;
 
@@ -51,6 +53,17 @@ public class CommandManager
         } catch (Exception ex) {
             ASExplorer.logger.error("Unable to load commands");
         }
+    }
+    
+    public void displayCommandHelp(String aCommand) {        
+        for (Map.Entry<String, CommandBase> entry : this.allCommands.entrySet()) {
+            CommandBase cmd = entry.getValue();
+            if (cmd.getCommandName().equals(aCommand)) {                
+                String help = "Usage: java -jar ASExplorer [...] --command " + aCommand + " " + cmd.getHelp();
+                System.out.println(help);
+                break;
+            }
+        }        
     }
 
     public void displayCommandList()

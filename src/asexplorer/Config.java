@@ -19,7 +19,7 @@ public class Config
 {
 
     /**
-     * Remote application server to connect to (ip address:port)
+     * Remote application server to connect to (IP address:port)
      */
     protected String server = "127.0.0.1:0";
 
@@ -93,6 +93,7 @@ public class Config
         // Build allowed arguments list
         ArrayList<LongOpt> knownParameters = new ArrayList<LongOpt>();
 
+        knownParameters.add(new LongOpt("commhelp", LongOpt.REQUIRED_ARGUMENT, null, 'H'));
         knownParameters.add(new LongOpt("commlist", LongOpt.NO_ARGUMENT, null, 'C'));
         knownParameters.add(new LongOpt("command", LongOpt.REQUIRED_ARGUMENT, null, 'c'));
         knownParameters.add(new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'));
@@ -128,6 +129,12 @@ public class Config
                     ASExplorer.showUsage();
                     break;
 
+                case 'H':                    
+                    String aName = localGetopt.getOptarg();
+                    CommandManager.getInstance().displayCommandHelp(aName);
+                    System.exit(1);
+                    break;
+                    
                 case 'p':
                     setPassword(localGetopt.getOptarg());
                     break;
@@ -195,17 +202,15 @@ public class Config
         }
 
         ASExplorer.logger.debug("plugins: " + plugins.length);
-
-        if (plugins != null) {
-            try {
-                for (int i = 0; i < plugins.length; i++) {
-                    ASExplorer.logger.debug("Found JAR: " + plugins[i].toURL());
-                    list.add(plugins[i].toURL());
-                }
-            } catch (MalformedURLException me) {
-                ASExplorer.logger.debug("Unable to load external archives");
+        
+        try {
+            for (File plugin : plugins) {
+                ASExplorer.logger.debug("Found JAR: " + plugin.toURL());
+                list.add(plugin.toURL());
             }
-        }
+        } catch (MalformedURLException me) {
+            ASExplorer.logger.debug("Unable to load external archives");
+        }        
 
         URL[] pluginURLs = (URL[]) list.toArray(new URL[list.size()]);
         Thread.currentThread().setContextClassLoader(new URLClassLoader(pluginURLs, Thread.currentThread().getContextClassLoader()));
