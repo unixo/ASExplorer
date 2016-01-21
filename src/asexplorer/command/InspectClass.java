@@ -25,6 +25,11 @@ public class InspectClass extends CommandBase
     {
         return "Inspect specified resource by reflection";
     }
+    
+    @Override
+    public String getHelp() {
+        return "--class str";
+    }
 
     @Override
     public void exec(InitialContext ctx)
