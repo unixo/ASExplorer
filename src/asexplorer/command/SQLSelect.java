@@ -119,6 +119,9 @@ public class SQLSelect extends CommandBase
                         t.addCell(rsMetaData.getColumnName(i));
                     }
                 }
+                if (this.isCSV) {
+                    System.out.println();
+                }
                 
                 // Print all returned records
                 while(rs.next()) {

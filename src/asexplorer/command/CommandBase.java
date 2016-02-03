@@ -38,7 +38,7 @@ abstract public class CommandBase
 
     /**
      * Returns the command name representing this module: user can specify this
-     * command with --command <name> parameter
+     * command with --command name parameter
      *
      * @return The command name
      */

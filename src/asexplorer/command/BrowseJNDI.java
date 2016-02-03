@@ -45,7 +45,7 @@ public class BrowseJNDI extends CommandBase
     
     @Override
     public String getHelp() {
-        return "--root str [--depth num]";
+        return "[--root str] [--depth num]";
     }
     
     @Override
@@ -88,10 +88,10 @@ public class BrowseJNDI extends CommandBase
             }
 
             // Print entry name (and class name, if verbose output)
-            if (Config.getInstance().isVerbose()) {
+            if (Config.getInstance().isVerbose()) {                
                 System.out.println("+- "+next.getName() + " (" + next.getClassName() + ')');
             } else {
-                System.out.println("+- "+next.getName());
+                System.out.println("+- "+next.getName());                
             }
 
             // recurse
