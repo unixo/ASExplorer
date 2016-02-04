@@ -2,8 +2,11 @@ package asexplorer.command;
 
 import gnu.getopt.LongOpt;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -13,6 +16,7 @@ import javax.naming.NamingException;
 public class InspectClass extends CommandBase
 {
     protected String className = null;
+    protected boolean remoteEJB = false;
 
     @Override
     public String getCommandName()
@@ -28,7 +32,7 @@ public class InspectClass extends CommandBase
     
     @Override
     public String getHelp() {
-        return "--class str";
+        return "--class str [--remote]";
     }
 
     @Override
@@ -40,10 +44,21 @@ public class InspectClass extends CommandBase
         } else {
             try {
                 Object anObject = ctx.lookup(this.className);
-                inspectFields(anObject.getClass());
-                inspectMethods(anObject.getClass());
+                Class aClass;
+                if (this.remoteEJB) {
+                    aClass = anObject.getClass();
+                    Method aMethod = aClass.getMethod("getEJBMetaData");
+                    Object remoteObject = aMethod.invoke(anObject, (Object) null);
+                    aClass =  ((javax.ejb.EJBMetaData)remoteObject).getRemoteInterfaceClass();
+                } else {
+                    aClass = anObject.getClass();
+                }
+                inspectFields(aClass);
+                inspectMethods(aClass);
             } catch (NamingException ex) {
                 asexplorer.ASExplorer.logger.error("Unable to lookup specified resource.");
+            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                Logger.getLogger(InspectClass.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -79,9 +94,10 @@ public class InspectClass extends CommandBase
     @Override
     public ArrayList<LongOpt> getParameters()
     {
-        ArrayList<LongOpt> params = new ArrayList<LongOpt>();
+        ArrayList<LongOpt> params = new ArrayList<>();
 
         params.add(new LongOpt("class", LongOpt.REQUIRED_ARGUMENT, null, 100));
+        params.add(new LongOpt("remote", LongOpt.NO_ARGUMENT, null, 100));        
 
         return params;
     }
@@ -91,7 +107,9 @@ public class InspectClass extends CommandBase
     {
         if (param.equalsIgnoreCase("class")) {
             this.className = value;
-
+            return true;
+        } else if (param.equalsIgnoreCase("remote")) {
+            this.remoteEJB = true;
             return true;
         }
         return false;

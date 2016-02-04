@@ -28,8 +28,8 @@ public class EnumDS extends CommandBase
 
     public EnumDS()
     {
-        datasources = new ArrayList<String>();
-        versionSQL = new HashMap<String, String>();
+        datasources = new ArrayList<>();
+        versionSQL = new HashMap<>();
         versionSQL.put("MySQL", "SELECT @@version");
         versionSQL.put("Oracle", "SELECT * FROM v$version");
     }
@@ -119,7 +119,7 @@ public class EnumDS extends CommandBase
         }
 
         try {
-            TreeSet<String> keys = new TreeSet<String>(versionSQL.keySet());
+            TreeSet<String> keys = new TreeSet<>(versionSQL.keySet());
 
             for (String key : keys) {
                 String aSql = versionSQL.get(key);

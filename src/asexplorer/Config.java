@@ -87,6 +87,7 @@ public class Config
 
     /**
      * Parse command line arguments
+     * @param args
      */
     public void parseArguments(String[] args)
     {
@@ -192,7 +193,7 @@ public class Config
     private void loadExternalArchives()
     {
         File pluginDir = new File("lib/ext");
-        LinkedList list = new LinkedList();
+        LinkedList<URL> list = new LinkedList<URL>();
         File[] plugins = pluginDir.listFiles();
 
         if (plugins == null) {
@@ -205,8 +206,8 @@ public class Config
         
         try {
             for (File plugin : plugins) {
-                ASExplorer.logger.debug("Found JAR: " + plugin.toURL());
-                list.add(plugin.toURL());
+                ASExplorer.logger.debug("Found JAR: " + plugin.toURI().toURL());
+                list.add(plugin.toURI().toURL());
             }
         } catch (MalformedURLException me) {
             ASExplorer.logger.debug("Unable to load external archives");
@@ -226,7 +227,7 @@ public class Config
     public void setType(String type)
     {
         Class[] classes = ClassFinder.getClassesInPackage("asexplorer.server");
-        ArrayList<String> knownTypes = new ArrayList<String>();
+        ArrayList<String> knownTypes = new ArrayList<>();
 
         for (Class aClass : classes) {
             if (aClass.getSuperclass().equals(ServerBase.class)) {

@@ -104,7 +104,7 @@ public class BrowseJNDI extends CommandBase
     @Override
     public ArrayList<LongOpt> getParameters()
     {
-        ArrayList<LongOpt> params = new ArrayList<LongOpt>();
+        ArrayList<LongOpt> params = new ArrayList<>();
 
         params.add(new LongOpt("root", LongOpt.REQUIRED_ARGUMENT, null, 100));
         params.add(new LongOpt("depth", LongOpt.REQUIRED_ARGUMENT, null, 101));

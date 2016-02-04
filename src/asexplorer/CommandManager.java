@@ -6,7 +6,6 @@ import java.net.URL;
 import java.rmi.RMISecurityManager;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -22,7 +21,7 @@ public class CommandManager
 
     private CommandManager()
     {
-        allCommands = new HashMap<String, CommandBase>();
+        allCommands = new HashMap<>();
     }
 
     public static CommandManager getInstance()
@@ -68,7 +67,7 @@ public class CommandManager
 
     public void displayCommandList()
     {
-        TreeSet<String> keys = new TreeSet<String>(allCommands.keySet());
+        TreeSet<String> keys = new TreeSet<>(allCommands.keySet());
 
         if (keys.isEmpty()) {
             System.err.println("No commands available");
@@ -90,8 +89,8 @@ public class CommandManager
      */
     public List<LongOpt> getCommandParameters()
     {
-        ArrayList<LongOpt> params = new ArrayList<LongOpt>();
-        TreeSet<String> keys = new TreeSet<String>(allCommands.keySet());
+        ArrayList<LongOpt> params = new ArrayList<>();
+        TreeSet<String> keys = new TreeSet<>(allCommands.keySet());
 
         for (String key : keys) {
             CommandBase value = allCommands.get(key);
@@ -106,7 +105,7 @@ public class CommandManager
 
     public boolean parseParameter(String param, String value)
     {
-        TreeSet<String> keys = new TreeSet<String>(allCommands.keySet());
+        TreeSet<String> keys = new TreeSet<>(allCommands.keySet());
 
         for (String key : keys) {
             CommandBase aCmd = allCommands.get(key);

@@ -24,11 +24,11 @@ public class ClassFinder
         // Format package name with slashes instead of dots
         String path = packageName.replace('.', '/');
 
-        ArrayList<Class> classes = new ArrayList<Class>();
+        ArrayList<Class> classes = new ArrayList<>();
 
         try {
             Enumeration<URL> resources = classLoader.getResources(path);
-            List<File> dirs = new ArrayList<File>();
+            List<File> dirs = new ArrayList<>();
 
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
@@ -53,7 +53,7 @@ public class ClassFinder
 
     private static List<Class> getClasseNamesInDirectory(File directory, String packageName) throws ClassNotFoundException, IOException
     {
-        List<Class> classes = new ArrayList<Class>();
+        List<Class> classes = new ArrayList<>();
         if (directory.exists() == false) {
             return classes;
         }
@@ -77,7 +77,7 @@ public class ClassFinder
 
     private static List<Class> getClasseNamesInPackage(String jarName, String packageName)
     {
-        List<Class> classes = new ArrayList<Class>();
+        List<Class> classes = new ArrayList<>();
 
         packageName = packageName.replaceAll("\\.", "/");
 
