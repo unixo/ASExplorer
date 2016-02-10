@@ -3,6 +3,7 @@ package asexplorer.command;
 import gnu.getopt.LongOpt;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -31,6 +32,7 @@ public class DQLCommand extends CommandBase
     protected String dsName = null;
     protected boolean isCSV = false;
     protected String csvChar = ";";
+    protected boolean isCallable = false;
 
     @Override
     public String getCommandName()
@@ -46,7 +48,7 @@ public class DQLCommand extends CommandBase
     
     @Override
     public String getHelp() {
-        return "--dql-datasource str --dql-file filename | --dql str [--limit num] [--colsize num] [--csv str]";
+        return "--dql-datasource str {--dql-file filename | --dql str} [--limit num] [--colsize num] [--csv str] [--callable]";
     }
 
     @Override
@@ -60,6 +62,7 @@ public class DQLCommand extends CommandBase
         params.add(new LongOpt("colsize", LongOpt.REQUIRED_ARGUMENT, null, 103));
         params.add(new LongOpt("csv", LongOpt.REQUIRED_ARGUMENT, null, 1004));
         params.add(new LongOpt("dql-file", LongOpt.REQUIRED_ARGUMENT, null, 105));
+        params.add(new LongOpt("callable", LongOpt.NO_ARGUMENT, null, 105));
 
         return params;
     }
@@ -84,6 +87,9 @@ public class DQLCommand extends CommandBase
         } else if (param.equalsIgnoreCase("colsize")) {
             this.colSize = Integer.parseInt(value);
             retValue = true;
+        } else if (param.equalsIgnoreCase("callable")) {
+            this.isCallable = true;
+            retValue = true;
         } else if (param.equalsIgnoreCase("csv")) {
             this.isCSV = true;
             retValue = true;
@@ -105,50 +111,11 @@ public class DQLCommand extends CommandBase
             try {
                 DataSource ds = (DataSource) ctx.lookup(this.dsName);
                 Connection conn = ds.getConnection();
-                Statement stmt = conn.createStatement();
-
-                // limit result set size, if user specified an upper limit
-                if (this.limit != -1) {
-                    stmt.setMaxRows(this.limit);
-                }
-
-                ResultSet rs = stmt.executeQuery(command);
-
-                // Print all columns
-                ResultSetMetaData rsMetaData = rs.getMetaData();
-                int cols = rsMetaData.getColumnCount();
-                Table t = new Table(cols);
-                for (int i=1; i<=cols; i++) {
-                    if (this.isCSV) {
-                        System.out.format("%s%s", rsMetaData.getColumnName(i), this.csvChar);
-                    } else {
-                        t.addCell(rsMetaData.getColumnName(i));
-                    }
-                }
-                if (this.isCSV) {
-                    System.out.println();
-                }
                 
-                // Print all returned records
-                while(rs.next()) {
-                    for (int i=1; i<=cols; i++) {
-                        String value = rs.getString(i);
-                        if (value == null) {
-                            value = "NULL";
-                        }
-
-                        if (this.isCSV) {
-                            System.out.format("%."+this.colSize +"s%s",value, this.csvChar);
-                        } else {
-                            t.addCell(value);
-                        }
-                    }
-                    if (this.isCSV) {
-                        System.out.println();
-                    }
-                }
-                if (!this.isCSV) {
-                    System.out.println(t.render());
+                if (this.isCallable) {
+                    this.executeCallable(conn, command);
+                } else {
+                    this.executeSimpleQuery(conn, command);
                 }
 
                 // Finally close the connection
@@ -156,6 +123,66 @@ public class DQLCommand extends CommandBase
             } catch (NamingException | SQLException ex) {
                 Logger.getLogger(DQLCommand.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+    }
+    
+    private void executeCallable(Connection conn, String command) throws SQLException {
+        DbmsOutput dbmsOutput = new DbmsOutput( conn );
+        dbmsOutput.enable( 1000000 );
+            
+        CallableStatement stmt = conn.prepareCall(command);
+        stmt.executeQuery();
+        stmt.close();
+        
+        dbmsOutput.show();
+        dbmsOutput.close();  
+    }
+    
+    private void executeSimpleQuery(Connection conn, String command) throws SQLException {
+        Statement stmt = conn.createStatement();
+                
+        // limit result set size, if user specified an upper limit
+        if (this.limit != -1) {
+            stmt.setMaxRows(this.limit);
+        }
+
+        ResultSet rs = stmt.executeQuery(command);
+
+        // Print all columns
+        ResultSetMetaData rsMetaData = rs.getMetaData();
+        int cols = rsMetaData.getColumnCount();
+        Table t = new Table(cols);
+        for (int i=1; i<=cols; i++) {
+            if (this.isCSV) {
+                System.out.format("%s%s", rsMetaData.getColumnName(i), this.csvChar);
+            } else {
+                t.addCell(rsMetaData.getColumnName(i));
+            }
+        }
+        if (this.isCSV) {
+            System.out.println();
+        }
+
+        // Print all returned records
+        while(rs.next()) {
+            for (int i=1; i<=cols; i++) {
+                String value = rs.getString(i);
+                if (value == null) {
+                    value = "NULL";
+                }
+
+                if (this.isCSV) {
+                    System.out.format("%."+this.colSize +"s%s",value, this.csvChar);
+                } else {
+                    t.addCell(value);
+                }
+            }
+            if (this.isCSV) {
+                System.out.println();
+            }
+        }
+        if (!this.isCSV) {
+            System.out.println(t.render());
         }
     }
     
