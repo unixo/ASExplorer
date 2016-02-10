@@ -166,6 +166,7 @@ Parameters available:
 * --limit num: limit the result set to the first 'num' records
 * --csv string: format the output as CSV, using 'string' as field separator
 * --colsize num: limit all columns size to 'num' (*optional*)
+* --callable: mark the command as callable (e.g. stored procedure calling)
 
 ```bash
 echo 'SELECT * FROM session_privs' > dql.sql
@@ -177,6 +178,18 @@ java -jar ASExplorer.jar -s 127.0.0.1:10001 -t weblogic --ddl-datasource foo.jdb
 |ALTER SESSION |
 |CREATE TABLE  |
 +--------------+
+```
+
+Example of stored procedure calling:
+
+```bash
+java -jar ASExplorer.jar -t weblogic -s 127.0.0.1:7001 --command dql --dql-datasource foo.jdbc.MyDataSource --dql "{ call SYS.UTLREADFILE('MY_DIR', 'passwd') }" --callable
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/bin/bash
+daemon:x:2:2:Daemon:/sbin:/bin/bash
+lp:x:4:7:Printing daemon:/var/spool/lpd:/bin/bash
+mail:x:8:12:Mailer daemon:/var/spool/clientmqueue:/bin/false
+...
 ```
 
 ##DDL Operations
