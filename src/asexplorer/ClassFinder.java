@@ -45,7 +45,7 @@ public class ClassFinder
                     classes.addAll(getClasseNamesInDirectory(directory, packageName));
                 }
             }
-        } catch (Exception ex) {
+        } catch (IOException | ClassNotFoundException ex) {
         }
 
         return classes.toArray(new Class[classes.size()]);
