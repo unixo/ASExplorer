@@ -52,7 +52,7 @@ public class Config
      * Interface to AS module identified by "type" parameter
      */
     protected ServerBase serverType = null;
-
+    
     /**
      * Class constructor
      */
@@ -92,7 +92,7 @@ public class Config
     public void parseArguments(String[] args)
     {
         // Build allowed arguments list
-        ArrayList<LongOpt> knownParameters = new ArrayList<LongOpt>();
+        ArrayList<LongOpt> knownParameters = new ArrayList<>();
 
         knownParameters.add(new LongOpt("commhelp", LongOpt.REQUIRED_ARGUMENT, null, 'H'));
         knownParameters.add(new LongOpt("commlist", LongOpt.NO_ARGUMENT, null, 'C'));
@@ -193,7 +193,7 @@ public class Config
     private void loadExternalArchives()
     {
         File pluginDir = new File("lib/ext");
-        LinkedList<URL> list = new LinkedList<URL>();
+        LinkedList<URL> list = new LinkedList<>();
         File[] plugins = pluginDir.listFiles();
 
         if (plugins == null) {
@@ -240,7 +240,7 @@ public class Config
 
                         return;
                     }
-                } catch (Exception ex) {
+                } catch (InstantiationException | IllegalAccessException ex) {
                     ASExplorer.logger.error("Server type error");
                 }
             }
