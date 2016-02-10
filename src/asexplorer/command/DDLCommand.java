@@ -1,55 +1,41 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package asexplorer.command;
 
 import gnu.getopt.LongOpt;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.sql.DataSource;
-import org.nocrala.tools.texttablefmt.Table;
 
 /**
+ * DDL (Data Definition Language) refers to the CREATE, ALTER and DROP statements
  *
  * @author unixo
  */
-public class DDLCommand extends CommandBase
-{
-    protected Integer limit = -1;
-    protected Integer colSize = 255;
+public class DDLCommand extends CommandBase {
+
+    protected String dsName = null;
     protected String ddl = null;
     protected String ddlFilename = null;
-    protected String dsName = null;
-    protected boolean isCSV = false;
-    protected String csvChar = ";";
-
+    
     @Override
-    public String getCommandName()
-    {
+    public String getCommandName() {
         return "ddl";
     }
 
     @Override
-    public String getDescription()
-    {
-        return "DDL instruction for SQL datasource";
+    public String getDescription() {
+        return "Execute a DDL command to a datasource";
     }
-    
+
     @Override
     public String getHelp() {
-        return "--ddl-datasource str --ddl-file filename | --ddl str [--limit num] [--colsize num] [--csv str]";
+        return "--ddl-datasource string --ddl-file input | --ddl string";
     }
 
     @Override
@@ -58,15 +44,12 @@ public class DDLCommand extends CommandBase
         ArrayList<LongOpt> params = new ArrayList<>();
 
         params.add(new LongOpt("ddl-datasource", LongOpt.REQUIRED_ARGUMENT, null, 'd'));
-        params.add(new LongOpt("limit", LongOpt.REQUIRED_ARGUMENT, null, 101));
-        params.add(new LongOpt("ddl", LongOpt.REQUIRED_ARGUMENT, null, 102));        
-        params.add(new LongOpt("colsize", LongOpt.REQUIRED_ARGUMENT, null, 103));
-        params.add(new LongOpt("csv", LongOpt.REQUIRED_ARGUMENT, null, 1004));
-        params.add(new LongOpt("ddl-file", LongOpt.REQUIRED_ARGUMENT, null, 105));
+        params.add(new LongOpt("ddl-file", LongOpt.REQUIRED_ARGUMENT, null, 101));
+        params.add(new LongOpt("ddl", LongOpt.REQUIRED_ARGUMENT, null, 102));
 
         return params;
     }
-
+    
     @Override
     public boolean parseParameter(String param, String value)
     {
@@ -75,89 +58,31 @@ public class DDLCommand extends CommandBase
         if (param.equalsIgnoreCase("ddl-datasource")) {
             this.dsName = value;
             retValue = true;
-        } else if (param.equalsIgnoreCase("limit")) {
-            this.limit = Integer.parseInt(value);
+        } else if (param.equalsIgnoreCase("ddl-file")) {
+            this.ddlFilename = value;
             retValue = true;
         } else if (param.equalsIgnoreCase("ddl")) {
             this.ddl = value;
             retValue = true;
-        } else if (param.equalsIgnoreCase("ddl-file")) {
-            this.ddlFilename = value;
-            retValue = true;
-        } else if (param.equalsIgnoreCase("colsize")) {
-            this.colSize = Integer.parseInt(value);
-            retValue = true;
-        } else if (param.equalsIgnoreCase("csv")) {
-            this.isCSV = true;
-            retValue = true;
-            if (value != null) {
-                this.csvChar = value;
-            }
         }
 
         return retValue;
     }
-
+    
     @Override
-    public void exec(InitialContext ctx)
-    {
+    public void exec(InitialContext ctx) {
         String command = this.getDDL();
         if (command == null || this.dsName == null) {
-            asexplorer.ASExplorer.logger.error("A datasource/sql needs to be specified.");
+            asexplorer.ASExplorer.logger.error("Incorrect parameters");
         } else {
             try {
                 DataSource ds = (DataSource) ctx.lookup(this.dsName);
                 Connection conn = ds.getConnection();
                 Statement stmt = conn.createStatement();
-
-                // limit result set size, if user specified an upper limit
-                if (this.limit != -1) {
-                    stmt.setMaxRows(this.limit);
-                }
-
-                ResultSet rs = stmt.executeQuery(command);
-
-                // Print all columns
-                ResultSetMetaData rsMetaData = rs.getMetaData();
-                int cols = rsMetaData.getColumnCount();
-                Table t = new Table(cols);
-                for (int i=1; i<=cols; i++) {
-                    if (this.isCSV) {
-                        System.out.format("%s%s", rsMetaData.getColumnName(i), this.csvChar);
-                    } else {
-                        t.addCell(rsMetaData.getColumnName(i));
-                    }
-                }
-                if (this.isCSV) {
-                    System.out.println();
-                }
-                
-                // Print all returned records
-                while(rs.next()) {
-                    for (int i=1; i<=cols; i++) {
-                        String value = rs.getString(i);
-                        if (value == null) {
-                            value = "NULL";
-                        }
-
-                        if (this.isCSV) {
-                            System.out.format("%."+this.colSize +"s%s",value, this.csvChar);
-                        } else {
-                            t.addCell(value);
-                        }
-                    }
-                    if (this.isCSV) {
-                        System.out.println();
-                    }
-                }
-                if (!this.isCSV) {
-                    System.out.println(t.render());
-                }
-
-                // Finally close the connection
-                conn.close();
-            } catch (NamingException | SQLException ex) {
-                Logger.getLogger(DDLCommand.class.getName()).log(Level.SEVERE, null, ex);
+                int ret = stmt.executeUpdate(command);
+                System.out.println("Row affected: " + ret);
+            } catch (Exception e) {
+                Logger.getLogger(DQLCommand.class.getName()).log(Level.SEVERE, null, e);
             }
         }
     }
@@ -178,5 +103,5 @@ public class DDLCommand extends CommandBase
         
         return result;
     }
-
+    
 }
