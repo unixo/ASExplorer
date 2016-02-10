@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import javax.naming.InitialContext;
+import org.nocrala.tools.texttablefmt.Table;
 
 /**
  *
@@ -49,7 +50,7 @@ public class CommandManager
                     allCommands.put(aCmd.getCommandName(), aCmd);
                 }
             }
-        } catch (Exception ex) {
+        } catch (InstantiationException | IllegalAccessException ex) {
             ASExplorer.logger.error("Unable to load commands");
         }
     }
@@ -72,13 +73,17 @@ public class CommandManager
         if (keys.isEmpty()) {
             System.err.println("No commands available");
         } else {
-            System.out.println("Comand    \tDescription\n"+
-                               "---------------------------------------------");
+            Table t = new Table(2);
+            t.addCell("Command");
+            t.addCell("Description");
+            
             for (String key : keys) {
                 CommandBase value = allCommands.get(key);
-
-                System.out.println(key+"    \t"+value.getDescription());
+                
+                t.addCell(key);
+                t.addCell(value.getDescription());
             }
+            System.out.println(t.render());
         }
     }
 
