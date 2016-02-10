@@ -5,12 +5,15 @@
 package asexplorer.command;
 
 import gnu.getopt.LongOpt;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -22,11 +25,12 @@ import org.nocrala.tools.texttablefmt.Table;
  *
  * @author unixo
  */
-public class SQLSelect extends CommandBase
+public class DDLCommand extends CommandBase
 {
     protected Integer limit = -1;
     protected Integer colSize = 255;
-    protected String sql = null;
+    protected String ddl = null;
+    protected String ddlFilename = null;
     protected String dsName = null;
     protected boolean isCSV = false;
     protected String csvChar = ";";
@@ -34,30 +38,31 @@ public class SQLSelect extends CommandBase
     @Override
     public String getCommandName()
     {
-        return "sql-select";
+        return "ddl";
     }
 
     @Override
     public String getDescription()
     {
-        return "SELECT instruction for SQL datasource";
+        return "DDL instruction for SQL datasource";
     }
     
     @Override
     public String getHelp() {
-        return "--datasource str --sql str [--limit num] [--colsize num] [--csv str]";
+        return "--ddl-datasource str --ddl-file filename | --ddl str [--limit num] [--colsize num] [--csv str]";
     }
 
     @Override
     public ArrayList<LongOpt> getParameters()
     {
-        ArrayList<LongOpt> params = new ArrayList<LongOpt>();
+        ArrayList<LongOpt> params = new ArrayList<>();
 
-        params.add(new LongOpt("datasource", LongOpt.REQUIRED_ARGUMENT, null, 'd'));
+        params.add(new LongOpt("ddl-datasource", LongOpt.REQUIRED_ARGUMENT, null, 'd'));
         params.add(new LongOpt("limit", LongOpt.REQUIRED_ARGUMENT, null, 101));
-        params.add(new LongOpt("sql", LongOpt.REQUIRED_ARGUMENT, null, 102));
+        params.add(new LongOpt("ddl", LongOpt.REQUIRED_ARGUMENT, null, 102));        
         params.add(new LongOpt("colsize", LongOpt.REQUIRED_ARGUMENT, null, 103));
         params.add(new LongOpt("csv", LongOpt.REQUIRED_ARGUMENT, null, 1004));
+        params.add(new LongOpt("ddl-file", LongOpt.REQUIRED_ARGUMENT, null, 105));
 
         return params;
     }
@@ -67,14 +72,17 @@ public class SQLSelect extends CommandBase
     {
         boolean retValue = false;
 
-        if (param.equalsIgnoreCase("datasource")) {
+        if (param.equalsIgnoreCase("ddl-datasource")) {
             this.dsName = value;
             retValue = true;
         } else if (param.equalsIgnoreCase("limit")) {
             this.limit = Integer.parseInt(value);
             retValue = true;
-        } else if (param.equalsIgnoreCase("sql")) {
-            this.sql = value;
+        } else if (param.equalsIgnoreCase("ddl")) {
+            this.ddl = value;
+            retValue = true;
+        } else if (param.equalsIgnoreCase("ddl-file")) {
+            this.ddlFilename = value;
             retValue = true;
         } else if (param.equalsIgnoreCase("colsize")) {
             this.colSize = Integer.parseInt(value);
@@ -93,7 +101,8 @@ public class SQLSelect extends CommandBase
     @Override
     public void exec(InitialContext ctx)
     {
-        if (this.sql == null || this.dsName == null) {
+        String command = this.getDDL();
+        if (command == null || this.dsName == null) {
             asexplorer.ASExplorer.logger.error("A datasource/sql needs to be specified.");
         } else {
             try {
@@ -106,7 +115,7 @@ public class SQLSelect extends CommandBase
                     stmt.setMaxRows(this.limit);
                 }
 
-                ResultSet rs = stmt.executeQuery(this.sql);
+                ResultSet rs = stmt.executeQuery(command);
 
                 // Print all columns
                 ResultSetMetaData rsMetaData = rs.getMetaData();
@@ -147,12 +156,27 @@ public class SQLSelect extends CommandBase
 
                 // Finally close the connection
                 conn.close();
-            } catch (NamingException ex) {
-                Logger.getLogger(SQLSelect.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SQLException ex) {
-                Logger.getLogger(SQLSelect.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (NamingException | SQLException ex) {
+                Logger.getLogger(DDLCommand.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+    
+    protected String getDDL() {
+        String result;
+        
+        if (this.ddl == null) {
+            try {
+                result = new Scanner(new File(this.ddlFilename)).useDelimiter("\\Z").next();
+            } catch (FileNotFoundException ex) {
+                asexplorer.ASExplorer.logger.error("Unable to open or read specified file");
+                result = null;
+            }
+        } else {
+            result = this.ddl;
+        }
+        
+        return result;
     }
 
 }
