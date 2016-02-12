@@ -161,12 +161,12 @@ java -jar ASExplorer.jar -s 127.0.0.1:10001 -t weblogic --dql-datasource foo.jdb
 Parameters available:
 
 * --ddl-datasource name: datasource name to interact (**required**)
-* --ddl string: SELECT command to issue (**required**)
+* --ddl string: SELECT command to issue (**required** or use --ddl-file)
 * --ddl-file filename: filename containing the DDL (use --ddl or --ddl-file)
-* --limit num: limit the result set to the first 'num' records
-* --csv string: format the output as CSV, using 'string' as field separator
+* --limit num: limit the result set to the first 'num' records (*optional*)
+* --csv string: format the output as CSV, using 'string' as field separator (*optional*)
 * --colsize num: limit all columns size to 'num' (*optional*)
-* --callable: mark the command as callable (e.g. stored procedure calling)
+* --callable: mark the command as callable, e.g. stored procedure calling (*optional*)
 
 ```bash
 echo 'SELECT * FROM session_privs' > dql.sql
